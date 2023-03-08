@@ -1,5 +1,5 @@
 # ShellGPT
-A demo that shows how leverage ChatGPT, to convert a human language sentence into a linux shell command.
+A demo that shows how to leverage ChatGPT, to convert a human language sentence into a linux shell command.
 
 With this, I don't need to remember linux commands anymore :)
 
