@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func runShellCommand(command string) {
+func runShellCommand(command string, history []*HistoryEntry) bool {
 	// If the command has a side effect, user confirmation is needed:
 	command = strings.ReplaceAll(command, "[CONFIRMATION_NOT_NEEDED]", "")
 	command = strings.TrimSpace(command)
@@ -16,7 +16,7 @@ func runShellCommand(command string) {
 	// Prompt user to confirm whether or not to execute the command
 	if !userConfirm(command) {
 		fmt.Println("\n\033[34m---------------\nCancelled!\n\033[0m")
-		return
+		return true
 	}
 	fmt.Printf("\033[34m---------------\033[0m\n")
 
@@ -28,8 +28,9 @@ func runShellCommand(command string) {
 	fmt.Println("\033[34m---------------")
 	if err != nil {
 		fmt.Printf("Failed to execute command: %v\033[0m\n", err)
-		return
+		return false
 	}
 
 	fmt.Println("\033[34mDone!\033[0m")
+	return false
 }

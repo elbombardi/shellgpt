@@ -12,9 +12,20 @@ import (
 )
 
 const promptTemplate string = `// Generate a valide executable {{OS}} bash shell commands that matches the following natural language user input .
+// Ignore last user input, they are here just for context.
+
 {{history_log}}
 [user input]: {{user_input}}
 [shell command]: `
+
+type HistoryEntry struct {
+	userInput string
+	command   string
+}
+
+func (entry *HistoryEntry) String() string {
+	return fmt.Sprintf("\n[user input]: %s\n[shell command]: %s", entry.userInput, entry.command)
+}
 
 func InitializeGPT() (gpt3.Client, context.Context, error) {
 	apiKey := os.Getenv("OPENAI_API_KEY")
@@ -26,12 +37,21 @@ func InitializeGPT() (gpt3.Client, context.Context, error) {
 	return client, ctx, nil
 }
 
-func prepareGPTPrompt(userInput string, osName string, history []string) string {
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func prepareGPTPrompt(userInput string, osName string, history []*HistoryEntry) string {
 	prompt := strings.Replace(promptTemplate, "{{user_input}}", userInput, 1)
 	prompt = strings.Replace(prompt, "{{OS}}", osName, 1)
-	historyLog := strings.Join(history, "\n[user input]: ")
+	historyLog := ""
+	for _, entry := range history[max(len(history)-10, 0):] {
+		historyLog += entry.String()
+	}
 	prompt = strings.Replace(prompt, "{{history_log}}", historyLog, 1)
-	fmt.Println(prompt)
 	return prompt
 }
 

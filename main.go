@@ -41,7 +41,7 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 	}
 	defer rl.Close()
 
-	history := []string{}
+	history := []*HistoryEntry{}
 	for {
 		// Read user input
 		input, err := rl.Readline()
@@ -59,9 +59,6 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 		// Prompt preparation :
 		gptPrompt := prepareGPTPrompt(input, osName, history)
 
-		// Add the input to the history
-		history = append(history, input)
-
 		// Request ChatGPT
 		command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, gptPrompt)
 		if err != nil {
@@ -76,7 +73,16 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 		}
 
 		// Run the shell command
-		runShellCommand(command)
+		cancelled := runShellCommand(command, history)
+
+		// Add the input to the history
+		if !cancelled {
+			history = append(history, &HistoryEntry{
+				userInput: input,
+				command:   command,
+			})
+		}
+
 	}
 }
 
