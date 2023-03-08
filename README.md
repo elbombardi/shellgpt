@@ -1,5 +1,6 @@
 # ShellGPT
-Human language commands ==> Linux shell commands.
+A tool that leverage ChatGPT, to convert a human language sentence into a linux shell command.
+With this, no more need to remember the linux command :)
 
 ## install
 ```
@@ -8,12 +9,12 @@ cd shellgpt
 go install
 ```
 
-## Usage
+## API Key 
+* Go to platform.openai.com and create an account.
+* Generate a new API key, 
+* Store the API Key as the environement variable OPENAI_API_KEY.
 
-### REPL Mode
+## Usage
 `shellgpt` 
 
-### Adhoc Mode
-```
-`shellgpt list all files ordered by modification date descending`
-```
+## Demo

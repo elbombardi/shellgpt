@@ -4,27 +4,15 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	gpt3 "github.com/PullRequestInc/go-gpt3"
 )
 
-var displayCommand = strings.Join([]string{
-	"ls",
-	"echo",
-	"pwd",
-	"cd",
-	"dir",
-	"df",
-	"du",
-	"grep",
-	"head",
-	"lsof",
-}, ", ")
-
 const promptTemplate string = `// Generate a valide executable {{OS}} bash shell commands that matches the following natural language user input .
-// if the linux commands is in this list : ({{display_commands}}), then end with '[CONFIRMATION_NOT_NEEDED]'.
+{{history_log}}
 [user input]: {{user_input}}
 [shell command]: `
 
@@ -38,10 +26,12 @@ func InitializeGPT() (gpt3.Client, context.Context, error) {
 	return client, ctx, nil
 }
 
-func prepareGPTPrompt(userInput string, osName string) string {
+func prepareGPTPrompt(userInput string, osName string, history []string) string {
 	prompt := strings.Replace(promptTemplate, "{{user_input}}", userInput, 1)
 	prompt = strings.Replace(prompt, "{{OS}}", osName, 1)
-	prompt = strings.Replace(prompt, "{{display_commands}}", displayCommand, 1)
+	historyLog := strings.Join(history, "\n[user input]: ")
+	prompt = strings.Replace(prompt, "{{history_log}}", historyLog, 1)
+	fmt.Println(prompt)
 	return prompt
 }
 

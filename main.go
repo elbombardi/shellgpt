@@ -27,29 +27,8 @@ func main() {
 	}
 
 	// Parse input from arguments
-	input := strings.Join(os.Args[1:], " ")
-	input = strings.TrimSpace(input)
-
-	if input != "" {
-		adhocMode(input, osName, ctx, client)
-	} else {
-		fmt.Println("Type 'exit' to terminate.")
-		replMode(osName, ctx, client)
-	}
-}
-
-func adhocMode(input string, osName string, ctx context.Context, client gpt3.Client) {
-	// Prompt preparation :
-	prompt := prepareGPTPrompt(input, osName)
-
-	// Request ChatGPT
-	command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, prompt)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	// Run the shell command
-	runShellCommand(command, true)
+	fmt.Println("Type 'exit' to terminate.")
+	replMode(osName, ctx, client)
 }
 
 func replMode(osName string, ctx context.Context, client gpt3.Client) {
@@ -77,11 +56,11 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 			continue
 		}
 
+		// Prompt preparation :
+		gptPrompt := prepareGPTPrompt(input, osName, history)
+
 		// Add the input to the history
 		history = append(history, input)
-
-		// Prompt preparation :
-		gptPrompt := prepareGPTPrompt(input, osName)
 
 		// Request ChatGPT
 		command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, gptPrompt)
@@ -97,7 +76,7 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 		}
 
 		// Run the shell command
-		runShellCommand(command, false)
+		runShellCommand(command)
 	}
 }
 

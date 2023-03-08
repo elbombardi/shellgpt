@@ -2,44 +2,19 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-func initShell() (*exec.Cmd, io.WriteCloser, io.ReadCloser, io.ReadCloser, error) {
-	shell := exec.Command("/bin/sh")
-	stdin, err := shell.StdinPipe()
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-	stdout, err := shell.StdoutPipe()
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-	stderr, err := shell.StderrPipe()
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-	if err := shell.Start(); err != nil {
-		return nil, nil, nil, nil, err
-	}
-	return shell, stdin, stdout, stderr, nil
-}
-
-func runShellCommand(command string, printOnly bool) {
+func runShellCommand(command string) {
 	// If the command has a side effect, user confirmation is needed:
-	confirmationNeeded := !strings.Contains(command, "[CONFIRMATION_NOT_NEEDED]")
 	command = strings.ReplaceAll(command, "[CONFIRMATION_NOT_NEEDED]", "")
 	command = strings.TrimSpace(command)
-	if printOnly {
-		fmt.Fprintf(os.Stderr, "", command)
-		return
-	}
 	fmt.Printf("\033[34mGenerated Command: \033[7m%s\033[0m\n", command)
+
 	// Prompt user to confirm whether or not to execute the command
-	if confirmationNeeded && !userConfirm(command) {
+	if !userConfirm(command) {
 		fmt.Println("\n\033[34m---------------\nCancelled!\n\033[0m")
 		return
 	}
