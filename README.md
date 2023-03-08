@@ -18,3 +18,4 @@ go install
 `shellgpt` 
 
 ## Demo
+![demo](demo.gif)
