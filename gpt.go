@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 
@@ -43,7 +42,6 @@ func prepareGPTPrompt(userInput string, osName string) string {
 	prompt := strings.Replace(promptTemplate, "{{user_input}}", userInput, 1)
 	prompt = strings.Replace(prompt, "{{OS}}", osName, 1)
 	prompt = strings.Replace(prompt, "{{display_commands}}", displayCommand, 1)
-	fmt.Println(prompt)
 	return prompt
 }
 
