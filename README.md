@@ -3,7 +3,7 @@ A demo that shows how leverage ChatGPT, to convert a human language sentence int
 
 With this, I don't need to remember linux commands anymore :)
 
-## install
+## Install
 ```
 git clone https://github.com/elbombardi/shellgpt.git
 cd shellgpt
