@@ -2,61 +2,65 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	gpt3 "github.com/PullRequestInc/go-gpt3"
 	"github.com/chzyer/readline"
 )
 
-// If the generated command has a side effect, end with '[CONFIRMATION_NEEDED]'.
-var genericPrompt string = `// Generate a valide executable fedora linux bash shell commands that matches the following natural language user input .
-[user input]: {{user_input}}
-[shell command]: `
-
 func main() {
+	// Detecting linux distribution :
+	osName, err := osName()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	// Initialize shell :
+	// shell, _, _, _, err := initShell()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(2)
+	// }
+	// defer shell.Process.Kill()
+
+	// Set up OpenAI client
+	client, ctx, err := InitializeGPT()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(3)
+	}
+
 	// Parse input from arguments
 	input := strings.Join(os.Args[1:], " ")
 	input = strings.TrimSpace(input)
-	//fmt.Printf("'%s'\n", input)
-
-	// Set up OpenAI client
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		fmt.Println("Missing API KEY. \nGo to platform.openai.com and create an API key, then store it in the environement variable OPENAI_API_KEY.")
-		os.Exit(0)
-
-	}
-	ctx := context.Background()
-	client := gpt3.NewClient(apiKey)
 
 	if input != "" {
-		adhocMode(input, ctx, client)
+		adhocMode(input, osName, ctx, client)
 	} else {
-		replMode(ctx, client)
+		fmt.Println("Type 'exit' to terminate.")
+		replMode(osName, ctx, client)
 	}
 }
 
-func adhocMode(input string, ctx context.Context, client gpt3.Client) {
+func adhocMode(input string, osName string, ctx context.Context, client gpt3.Client) {
 	// Prompt preparation :
-	prompt := strings.ReplaceAll(genericPrompt, "{{user_input}}", input)
+	prompt := prepareGPTPrompt(input, osName)
 
 	// Request ChatGPT
-	command, err := getResponses(client, ctx, gpt3.TextDavinci003Engine, prompt)
+	command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, prompt)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 	// Run the shell command
-	runShellCommand(command)
+	runShellCommand(command, true)
 }
 
-func replMode(ctx context.Context, client gpt3.Client) {
-	printIntro()
+func replMode(osName string, ctx context.Context, client gpt3.Client) {
 
 	// Setup readline
 	rl, err := readline.New("$ ")
@@ -84,10 +88,10 @@ func replMode(ctx context.Context, client gpt3.Client) {
 		history = append(history, input)
 
 		// Prompt preparation :
-		prompt := strings.ReplaceAll(genericPrompt, "{{user_input}}", input)
+		gptPrompt := prepareGPTPrompt(input, osName)
 
 		// Request ChatGPT
-		command, err := getResponses(client, ctx, gpt3.TextDavinci003Engine, prompt)
+		command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, gptPrompt)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			break
@@ -95,67 +99,22 @@ func replMode(ctx context.Context, client gpt3.Client) {
 
 		// Break loop if user inputs "exit"
 		if input == "exit" {
-			fmt.Println("Bye!")
+			fmt.Println("\n\033[34mBye!\033[0m")
 			break
 		}
 
 		// Run the shell command
-		runShellCommand(command)
+		runShellCommand(command, false)
 	}
-}
-
-func getResponses(client gpt3.Client, ctx context.Context, engine string, question string) (string, error) {
-	var response bytes.Buffer
-	err := client.CompletionStreamWithEngine(ctx, engine, gpt3.CompletionRequest{
-		Prompt:      []string{question},
-		MaxTokens:   gpt3.IntPtr(3000),
-		Temperature: gpt3.Float32Ptr(0.7),
-	}, func(resp *gpt3.CompletionResponse) {
-		response.WriteString(resp.Choices[0].Text)
-	})
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(response.String()), nil
-}
-
-func printIntro() {
-	fmt.Println("Type 'exit' to terminate.")
 }
 
 func userConfirm(command string) bool {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Execute command? (y/N): ")
+	fmt.Print("\n\033[34mExecute command? (y/N): \033[0m")
 	executionConfirmation, err := reader.ReadString('\n')
 	if err != nil {
 		return false
 	}
 	executionConfirmation = strings.TrimSpace(strings.ToLower(executionConfirmation))
 	return executionConfirmation == "y" || executionConfirmation == "yes"
-
-}
-
-func runShellCommand(command string) {
-	// If the command has a side effect, user confirmation is needed:
-	confirmationNeeded := strings.Contains(command, "[CONFIRMATION_NEEDED]")
-	command = strings.ReplaceAll(command, "[CONFIRMATION_NEEDED]", "")
-	command = strings.TrimSpace(command)
-	printCommand(command)
-
-	// Prompt user to confirm whether or not to execute the command
-	if confirmationNeeded && !userConfirm(command) {
-		return
-	}
-
-	cmd := exec.Command("bash", "-c", command)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to execute command: %v\n", err)
-	}
-}
-
-func printCommand(command string) {
-	fmt.Printf("\033[34m-----------------------------------------------------------------\n%s\n-----------------------------------------------------------------\n\033[0m", command)
 }
