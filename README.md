@@ -1,6 +1,7 @@
 # ShellGPT
-A tool that leverage ChatGPT, to convert a human language sentence into a linux shell command.
-With this, no more need to remember the linux command :)
+A demo that shows how leverage ChatGPT, to convert a human language sentence into a linux shell command.
+
+With this, I don't need to remember linux commands anymore :)
 
 ## install
 ```
