@@ -14,4 +14,4 @@ go install
 `shellgpt` 
 
 ### Adhoc Mode
-``shellgpt list all files ordered by modification date descending``
+` `shellgpt list all files ordered by modification date descending` `
