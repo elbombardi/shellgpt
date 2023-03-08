@@ -10,7 +10,7 @@ go install
 ```
 
 ## API Key 
-* Go to platform.openai.com and create an account.
+* Go to https://platform.openai.com, and create an account (or sign in your account).
 * Generate a new API key, 
 * Store the API Key as the environement variable OPENAI_API_KEY.
 
