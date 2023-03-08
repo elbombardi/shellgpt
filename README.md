@@ -2,9 +2,11 @@
 Human language commands ==> Linux shell commands.
 
 ## install
-`git clone https://github.com/elbombardi/shellgpt.git
+```
+git clone https://github.com/elbombardi/shellgpt.git
 cd shellgpt
-go install`
+go install
+```
 
 ## Usage
 
