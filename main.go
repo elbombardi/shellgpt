@@ -43,7 +43,6 @@ func main() {
 
 func adhocMode(input string, ctx context.Context, client gpt3.Client) {
 	// Prompt preparation :
-	// Prompt preparation :
 	prompt := strings.ReplaceAll(genericPrompt, "{{user_input}}", input)
 
 	// Request ChatGPT
@@ -52,22 +51,8 @@ func adhocMode(input string, ctx context.Context, client gpt3.Client) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	fmt.Println(command)
-}
-
-func getResponses(client gpt3.Client, ctx context.Context, engine string, question string) (string, error) {
-	var response bytes.Buffer
-	err := client.CompletionStreamWithEngine(ctx, engine, gpt3.CompletionRequest{
-		Prompt:      []string{question},
-		MaxTokens:   gpt3.IntPtr(3000),
-		Temperature: gpt3.Float32Ptr(0.7),
-	}, func(resp *gpt3.CompletionResponse) {
-		response.WriteString(resp.Choices[0].Text)
-	})
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(response.String()), nil
+	// Run the shell command
+	runShellCommand(command)
 }
 
 func replMode(ctx context.Context, client gpt3.Client) {
@@ -114,20 +99,24 @@ func replMode(ctx context.Context, client gpt3.Client) {
 			break
 		}
 
-		// If the command has a side effect, user confirmation is needed:
-		confirmationNeeded := strings.Contains(command, "[CONFIRMATION_NEEDED]")
-		command = strings.ReplaceAll(command, "[CONFIRMATION_NEEDED]", "")
-		command = strings.TrimSpace(command)
-		fmt.Printf("Generated shell command: %s\n", command)
-
-		// Prompt user to confirm whether or not to execute the command
-		if confirmationNeeded && !userConfirm(command) {
-			continue
-		}
-
 		// Run the shell command
 		runShellCommand(command)
 	}
+}
+
+func getResponses(client gpt3.Client, ctx context.Context, engine string, question string) (string, error) {
+	var response bytes.Buffer
+	err := client.CompletionStreamWithEngine(ctx, engine, gpt3.CompletionRequest{
+		Prompt:      []string{question},
+		MaxTokens:   gpt3.IntPtr(3000),
+		Temperature: gpt3.Float32Ptr(0.7),
+	}, func(resp *gpt3.CompletionResponse) {
+		response.WriteString(resp.Choices[0].Text)
+	})
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(response.String()), nil
 }
 
 func printIntro() {
@@ -147,6 +136,17 @@ func userConfirm(command string) bool {
 }
 
 func runShellCommand(command string) {
+	// If the command has a side effect, user confirmation is needed:
+	confirmationNeeded := strings.Contains(command, "[CONFIRMATION_NEEDED]")
+	command = strings.ReplaceAll(command, "[CONFIRMATION_NEEDED]", "")
+	command = strings.TrimSpace(command)
+	printCommand(command)
+
+	// Prompt user to confirm whether or not to execute the command
+	if confirmationNeeded && !userConfirm(command) {
+		return
+	}
+
 	cmd := exec.Command("bash", "-c", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -154,4 +154,8 @@ func runShellCommand(command string) {
 	if err := cmd.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to execute command: %v\n", err)
 	}
+}
+
+func printCommand(command string) {
+	fmt.Printf("\033[34m-----------------------------------------------------------------\n%s\n-----------------------------------------------------------------\n\033[0m", command)
 }
