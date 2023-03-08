@@ -34,10 +34,10 @@ func runShellCommand(command string, printOnly bool) {
 	command = strings.ReplaceAll(command, "[CONFIRMATION_NOT_NEEDED]", "")
 	command = strings.TrimSpace(command)
 	if printOnly {
-		fmt.Println(command)
+		fmt.Fprintf(os.Stderr, "", command)
 		return
 	}
-	fmt.Printf("\033[34mGenerated Command: \033[1m\033[30m%s\033[0m\n", command)
+	fmt.Printf("\033[34mGenerated Command: \033[7m%s\033[0m\n", command)
 	// Prompt user to confirm whether or not to execute the command
 	if confirmationNeeded && !userConfirm(command) {
 		fmt.Println("\n\033[34m---------------\nCancelled!\n\033[0m")

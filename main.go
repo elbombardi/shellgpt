@@ -15,22 +15,14 @@ func main() {
 	// Detecting linux distribution :
 	osName, err := osName()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	// Initialize shell :
-	// shell, _, _, _, err := initShell()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(2)
-	// }
-	// defer shell.Process.Kill()
 
 	// Set up OpenAI client
 	client, ctx, err := InitializeGPT()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(3)
 	}
 
@@ -65,7 +57,8 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 	// Setup readline
 	rl, err := readline.New("$ ")
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 	defer rl.Close()
 
