@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,7 +16,7 @@ func runShellCommand(command string, history []*HistoryEntry) bool {
 
 	// Prompt user to confirm whether or not to execute the command
 	if !userConfirm(command) {
-		fmt.Println("\n\033[34m---------------\nCancelled!\n\033[0m")
+		fmt.Println("\033[34m---------------\nCancelled!\n\033[0m")
 		return true
 	}
 	fmt.Printf("\033[34m---------------\033[0m\n")
@@ -33,4 +34,15 @@ func runShellCommand(command string, history []*HistoryEntry) bool {
 
 	fmt.Println("\033[34mDone!\033[0m")
 	return false
+}
+
+func userConfirm(command string) bool {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("\033[34mExecute command? (y/N): \033[0m")
+	executionConfirmation, err := reader.ReadString('\n')
+	if err != nil {
+		return false
+	}
+	executionConfirmation = strings.TrimSpace(strings.ToLower(executionConfirmation))
+	return executionConfirmation == "y" || executionConfirmation == "yes"
 }

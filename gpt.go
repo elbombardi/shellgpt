@@ -11,8 +11,8 @@ import (
 	gpt3 "github.com/PullRequestInc/go-gpt3"
 )
 
-const promptTemplate string = `// Generate a valide executable {{OS}} bash shell commands that matches the following natural language user input .
-// Ignore last user input, they are here just for context.
+const PROMPT_TEMPLATE string = `// Generate a valide executable {{OS}} bash shell commands that matches the following natural language user input .
+// If no valid command can be found, give exactly the following output '(no valid command)'
 
 {{history_log}}
 [user input]: {{user_input}}
@@ -45,7 +45,7 @@ func max(x, y int) int {
 }
 
 func prepareGPTPrompt(userInput string, osName string, history []*HistoryEntry) string {
-	prompt := strings.Replace(promptTemplate, "{{user_input}}", userInput, 1)
+	prompt := strings.Replace(PROMPT_TEMPLATE, "{{user_input}}", userInput, 1)
 	prompt = strings.Replace(prompt, "{{OS}}", osName, 1)
 	historyLog := ""
 	for _, entry := range history[max(len(history)-10, 0):] {
@@ -53,6 +53,17 @@ func prepareGPTPrompt(userInput string, osName string, history []*HistoryEntry) 
 	}
 	prompt = strings.Replace(prompt, "{{history_log}}", historyLog, 1)
 	return prompt
+}
+
+func generateCommand(client gpt3.Client, ctx context.Context, question string) (string, error) {
+	command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, question)
+	if err != nil {
+		return "", err
+	}
+	if strings.Contains(command, "(no valid command)") {
+		return "", fmt.Errorf("No valid command matches this input. Can you rephrase it ?")
+	}
+	return command, nil
 }
 
 func getGPTResponse(client gpt3.Client, ctx context.Context, engine string, question string) (string, error) {

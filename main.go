@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -56,20 +55,26 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 			continue
 		}
 
-		// Prompt preparation :
-		gptPrompt := prepareGPTPrompt(input, osName, history)
-
-		// Request ChatGPT
-		command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, gptPrompt)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			break
-		}
-
 		// Break loop if user inputs "exit"
 		if input == "exit" {
 			fmt.Println("\n\033[34mBye!\033[0m")
 			break
+		}
+
+		// Clear the screen and remove history if the user inputs "clear"
+		if input == "clear" || input == "cls" {
+			fmt.Print("\033[H\033[2J")
+			continue
+		}
+
+		// Prompt preparation :
+		gptPrompt := prepareGPTPrompt(input, osName, history)
+
+		// Request ChatGPT
+		command, err := generateCommand(client, ctx, gptPrompt)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "\033[31m%v\033[0m\n", err)
+			continue
 		}
 
 		// Run the shell command
@@ -84,15 +89,4 @@ func replMode(osName string, ctx context.Context, client gpt3.Client) {
 		}
 
 	}
-}
-
-func userConfirm(command string) bool {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("\n\033[34mExecute command? (y/N): \033[0m")
-	executionConfirmation, err := reader.ReadString('\n')
-	if err != nil {
-		return false
-	}
-	executionConfirmation = strings.TrimSpace(strings.ToLower(executionConfirmation))
-	return executionConfirmation == "y" || executionConfirmation == "yes"
 }
