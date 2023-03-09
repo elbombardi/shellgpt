@@ -57,7 +57,7 @@ func prepareGPTPrompt(userInput string, osName string, history []*HistoryEntry) 
 }
 
 func generateCommand(client gpt3.Client, ctx context.Context, question string) (string, error) {
-	command, err := getGPTResponse(client, ctx, gpt3.TextDavinci003Engine, question)
+	command, err := getGPTResponse(client, ctx, question)
 	if err != nil {
 		return "", err
 	}
@@ -67,17 +67,18 @@ func generateCommand(client gpt3.Client, ctx context.Context, question string) (
 	return command, nil
 }
 
-func getGPTResponse(client gpt3.Client, ctx context.Context, engine string, question string) (string, error) {
+func getGPTResponse(client gpt3.Client, ctx context.Context, question string) (string, error) {
 	var response bytes.Buffer
-	err := client.CompletionStreamWithEngine(ctx, engine, gpt3.CompletionRequest{
-		Prompt:      []string{question},
-		MaxTokens:   gpt3.IntPtr(3000),
+	resp, err := client.CompletionWithEngine(ctx, gpt3.TextDavinci003Engine, gpt3.CompletionRequest{
+		Prompt: []string{question},
+		// MaxTokens:   gpt3.IntPtr(3000),
 		Temperature: gpt3.Float32Ptr(0.7),
-	}, func(resp *gpt3.CompletionResponse) {
-		response.WriteString(resp.Choices[0].Text)
 	})
 	if err != nil {
 		return "", err
+	}
+	for _, choice := range resp.Choices {
+		response.WriteString(choice.Text)
 	}
 	return strings.TrimSpace(response.String()), nil
 }
