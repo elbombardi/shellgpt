@@ -12,6 +12,8 @@ import (
 )
 
 const PROMPT_TEMPLATE string = `// Generate a valide executable {{OS}} bash shell commands that matches the following natural language user input .
+// Allow user to type linux commands, correct them if needed
+// If the user puts a path or a file name, do not alter it, keep it as it is.
 // If no valid command can be found, give exactly the following output '(no valid command)'
 // Make sure to use sudo whenever superuser previlege is needed.
 
